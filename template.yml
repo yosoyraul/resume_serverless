@@ -1,24 +1,40 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: AWS SAM template with a simple API definition
+Description: AWS SAM template with a simple API and DynamoDB definition
 
 Resources:
-
   ApiGatewayFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: .
       Handler: src/lambda_function.lambda_handler
       Runtime: python3.8
+      Timeout: 30
+      Environment:
+        Variables:
+          TABLE_NAME:
+            Ref: HitsTable
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref HitsTable  
       Events:
         ApiEvent:
           Type: HttpApi
 
+  HitsTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      PrimaryKey:
+        Name: id
+        Type: Number
+      TableName: resume_hits
 
-# CounterTable:
-#   Type: AWS::Serverless::SimpleTable
-#   Properties:
-#     TableName: resume_serverless_counter
-#     Primary Key:
+Outputs:
+  ApiEndpoint:
+    Description: "The invoke URL for our HTTP API"
+    Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/"
+  Function:
+    Description: "DynamoDB handler function ARN"
+    Value: !GetAtt ApiGatewayFunction.Arn     
 
 
